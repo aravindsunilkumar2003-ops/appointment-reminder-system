@@ -1,0 +1,455 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>AppointmentPulse — Better Call Centers</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+  <style>
+    /* ── Reset & tokens ────────────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:       #0b0f0c;
+      --surface:  #131a15;
+      --card:     #1a231c;
+      --border:   #243028;
+      --green:    #25d366;
+      --green2:   #128c7e;
+      --green-bg: rgba(37,211,102,.08);
+      --yellow:   #f5a623;
+      --red:      #e05252;
+      --text:     #e2ede5;
+      --muted:    #607568;
+      --radius:   14px;
+      --font:     'Inter', sans-serif;
+    }
+
+    body { background: var(--bg); color: var(--text); font-family: var(--font);
+           min-height: 100vh; overflow-x: hidden; }
+
+    /* ── Grid background ──────────────────────────────────────────── */
+    body::before {
+      content:''; position:fixed; inset:0; pointer-events:none; z-index:0;
+      background-image: linear-gradient(var(--border) 1px,transparent 1px),
+                        linear-gradient(90deg,var(--border) 1px,transparent 1px);
+      background-size: 44px 44px; opacity:.35;
+    }
+
+    /* ── Layout ───────────────────────────────────────────────────── */
+    .wrap { position:relative; z-index:1; max-width:1160px; margin:0 auto; padding:40px 20px 80px; }
+
+    /* ── Header ───────────────────────────────────────────────────── */
+    .header { display:flex; align-items:center; gap:14px; margin-bottom:12px; }
+    .logo { width:46px; height:46px; background:var(--green); border-radius:13px;
+            display:grid; place-items:center; font-size:22px; flex-shrink:0;
+            box-shadow:0 0 28px rgba(37,211,102,.3); }
+    .brand-name { font-size:1.5rem; font-weight:700; letter-spacing:-.4px; }
+    .brand-sub  { color:var(--muted); font-size:.82rem; margin-top:2px; }
+
+    /* ── Mode badge ───────────────────────────────────────────────── */
+    .mode-bar { display:flex; align-items:center; gap:10px; margin-bottom:44px;
+                padding:10px 16px; background:var(--card); border:1px solid var(--border);
+                border-radius:10px; font-size:.8rem; color:var(--muted); flex-wrap:wrap; }
+    .mode-bar b { color:var(--green); }
+    .dot { width:7px; height:7px; border-radius:50%; background:var(--green);
+           animation:pulse 2s infinite; flex-shrink:0; }
+    @keyframes pulse {
+      0%,100%{ box-shadow:0 0 0 0 rgba(37,211,102,.6); }
+      50%    { box-shadow:0 0 0 5px rgba(37,211,102,0); }
+    }
+
+    /* ── Main grid ────────────────────────────────────────────────── */
+    .main { display:grid; grid-template-columns:380px 1fr; gap:24px; align-items:start; }
+    @media(max-width:860px){ .main{ grid-template-columns:1fr; } }
+
+    /* ── Card ─────────────────────────────────────────────────────── */
+    .card { background:var(--card); border:1px solid var(--border);
+            border-radius:var(--radius); padding:28px; }
+    .card-title { font-size:.95rem; font-weight:600; margin-bottom:22px;
+                  display:flex; align-items:center; gap:9px; letter-spacing:-.2px; }
+    .card-title .icon { font-size:1.1rem; }
+
+    /* ── Form ─────────────────────────────────────────────────────── */
+    .field { margin-bottom:16px; }
+    label  { display:block; font-size:.72rem; font-weight:600; color:var(--muted);
+             text-transform:uppercase; letter-spacing:.07em; margin-bottom:7px; }
+    input  { width:100%; background:var(--bg); border:1px solid var(--border);
+             border-radius:9px; color:var(--text); font-family:var(--font);
+             font-size:.93rem; padding:11px 13px; transition:border-color .2s, box-shadow .2s;
+             outline:none; }
+    input:focus { border-color:var(--green); box-shadow:0 0 0 3px rgba(37,211,102,.1); }
+
+    .btn { width:100%; padding:13px; background:var(--green); color:#071a0f;
+           border:none; border-radius:9px; font-family:var(--font); font-size:.95rem;
+           font-weight:700; cursor:pointer; margin-top:8px;
+           transition:opacity .2s, transform .15s, box-shadow .2s;
+           box-shadow:0 0 20px rgba(37,211,102,.2); }
+    .btn:hover:not(:disabled){ opacity:.88; transform:translateY(-1px); box-shadow:0 0 30px rgba(37,211,102,.35); }
+    .btn:disabled{ opacity:.45; cursor:not-allowed; }
+
+    /* ── Right column tabs ────────────────────────────────────────── */
+    .tabs { display:flex; gap:6px; margin-bottom:16px; }
+    .tab  { padding:7px 16px; border-radius:8px; font-size:.82rem; font-weight:500;
+            cursor:pointer; border:1px solid var(--border); background:transparent;
+            color:var(--muted); transition:all .2s; }
+    .tab.active { background:var(--green-bg); border-color:var(--green); color:var(--green); }
+
+    .tab-panel { display:none; }
+    .tab-panel.active { display:block; }
+
+    /* ── Table ────────────────────────────────────────────────────── */
+    .tbl-wrap { overflow-x:auto; }
+    table { width:100%; border-collapse:collapse; font-size:.86rem; }
+    thead th { text-align:left; padding:9px 12px; font-size:.7rem; font-weight:600;
+               color:var(--muted); text-transform:uppercase; letter-spacing:.07em;
+               border-bottom:1px solid var(--border); }
+    tbody tr { border-bottom:1px solid var(--border); animation:rowIn .25s ease both; }
+    tbody tr:hover { background:rgba(255,255,255,.02); }
+    @keyframes rowIn{ from{opacity:0;transform:translateY(6px)} to{opacity:1;transform:none} }
+    td { padding:13px 12px; vertical-align:middle; }
+    .name { font-weight:500; }
+    .phone{ color:var(--muted); font-size:.8rem; margin-top:2px; }
+
+    /* ── Badges ───────────────────────────────────────────────────── */
+    .badge { display:inline-block; padding:3px 9px; border-radius:20px;
+             font-size:.72rem; font-weight:600; text-transform:uppercase; letter-spacing:.04em; }
+    .confirmed  { background:rgba(37,211,102,.12);  color:var(--green); }
+    .completed  { background:rgba(107,116,148,.12); color:var(--muted); }
+    .cancelled  { background:rgba(224,82,82,.12);   color:var(--red); }
+    .reminder   { background:rgba(245,166,35,.12);  color:var(--yellow); }
+
+    .countdown { font-size:.75rem; color:var(--muted); margin-top:3px; }
+    .soon { color:var(--yellow); }
+
+    .msg-ok  { color:var(--green); font-size:1rem; }
+    .msg-sim { color:var(--yellow); font-size:.8rem; }
+    .msg-fail{ color:var(--red);   font-size:1rem; }
+
+    /* ── Status select ────────────────────────────────────────────── */
+    select.status-select {
+      background:transparent; border:1px solid var(--border); border-radius:7px;
+      color:var(--text); font-family:var(--font); font-size:.8rem; padding:4px 8px;
+      cursor:pointer;
+    }
+    select.status-select:focus{ outline:none; border-color:var(--green); }
+
+    /* ── Message log ──────────────────────────────────────────────── */
+    .msg-log-item { padding:14px; border-bottom:1px solid var(--border); font-size:.83rem; }
+    .msg-log-item:last-child { border-bottom:none; }
+    .msg-log-header { display:flex; gap:10px; align-items:center; margin-bottom:6px; flex-wrap:wrap; }
+    .msg-type { padding:2px 8px; border-radius:10px; font-size:.7rem; font-weight:600; }
+    .type-confirmation { background:rgba(37,211,102,.12); color:var(--green); }
+    .type-reminder     { background:rgba(245,166,35,.12);  color:var(--yellow); }
+    .msg-to   { color:var(--muted); font-size:.78rem; }
+    .msg-sid  { color:var(--muted); font-size:.72rem; font-family:monospace; }
+    .sim-tag  { background:rgba(245,166,35,.1); color:var(--yellow);
+                border:1px solid rgba(245,166,35,.3); padding:1px 6px;
+                border-radius:6px; font-size:.68rem; font-weight:600; }
+    .live-tag { background:rgba(37,211,102,.1); color:var(--green);
+                border:1px solid rgba(37,211,102,.3); padding:1px 6px;
+                border-radius:6px; font-size:.68rem; font-weight:600; }
+    .msg-body { color:#aab; font-size:.82rem; margin-top:4px; line-height:1.4; }
+    .msg-time { color:var(--muted); font-size:.72rem; margin-top:4px; }
+
+    /* ── Empty state ──────────────────────────────────────────────── */
+    .empty { text-align:center; padding:44px 0; color:var(--muted); font-size:.88rem; }
+
+    /* ── Toast ────────────────────────────────────────────────────── */
+    #toast { position:fixed; bottom:28px; right:28px; background:var(--card);
+             border:1px solid var(--border); border-left:4px solid var(--green);
+             border-radius:10px; padding:14px 18px; font-size:.88rem; max-width:300px;
+             box-shadow:0 8px 28px rgba(0,0,0,.45);
+             transform:translateY(80px); opacity:0; z-index:999;
+             transition:transform .3s cubic-bezier(.34,1.56,.64,1), opacity .25s; }
+    #toast.show { transform:translateY(0); opacity:1; }
+    #toast.err  { border-left-color:var(--red); }
+  </style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- Header -->
+  <div class="header">
+    <div class="logo">📱</div>
+    <div>
+      <div class="brand-name">AppointmentPulse</div>
+      <div class="brand-sub">Better Call Centers · WhatsApp Reminder System</div>
+    </div>
+  </div>
+
+  <!-- Mode bar -->
+  <div class="mode-bar">
+    <span class="dot"></span>
+    <span>Database: <b id="mode-db">loading…</b></span>
+    <span>·</span>
+    <span>Messaging: <b id="mode-msg">loading…</b></span>
+    <span>·</span>
+    <span>Dashboard refreshes every <b>10 s</b></span>
+    <span>·</span>
+    <span>Reminder poller runs every <b>60 s</b></span>
+  </div>
+
+  <div class="main">
+
+    <!-- ── FORM ─────────────────────────────────────────────────── -->
+    <div class="card">
+      <div class="card-title"><span class="icon">✍️</span> New Appointment</div>
+
+      <div class="field">
+        <label>Customer Name</label>
+        <input id="f-name" type="text" placeholder="Maria García" autocomplete="off"/>
+      </div>
+      <div class="field">
+        <label>Phone Number (E.164 format)</label>
+        <input id="f-phone" type="tel" placeholder="+15551234567"/>
+      </div>
+      <div class="field">
+        <label>Appointment Date & Time</label>
+        <input id="f-time" type="datetime-local"/>
+      </div>
+
+      <button class="btn" id="submit-btn" onclick="submitForm()">
+        📨 Confirm &amp; Send WhatsApp
+      </button>
+    </div>
+
+    <!-- ── RIGHT PANEL ───────────────────────────────────────────── -->
+    <div class="card">
+      <div class="tabs">
+        <button class="tab active" onclick="switchTab('dashboard',this)">📋 Live Dashboard</button>
+        <button class="tab"        onclick="switchTab('messages',this)">💬 Message Log</button>
+      </div>
+
+      <!-- Dashboard tab -->
+      <div id="tab-dashboard" class="tab-panel active">
+        <div class="tbl-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Customer</th>
+                <th>Appointment</th>
+                <th>Status</th>
+                <th>Msg</th>
+              </tr>
+            </thead>
+            <tbody id="appt-body">
+              <tr><td colspan="4" class="empty">Loading…</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Message log tab -->
+      <div id="tab-messages" class="tab-panel">
+        <div id="msg-body">
+          <div class="empty">No messages yet. Create an appointment to trigger a send.</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+  // ── Config ────────────────────────────────────────────────────────────────
+  const API = "";  // same origin
+
+  // ── Set datetime min to now ───────────────────────────────────────────────
+  const now = new Date();
+  now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+  document.getElementById("f-time").min = now.toISOString().slice(0,16);
+
+  // ── Tab switcher ──────────────────────────────────────────────────────────
+  function switchTab(name, btn) {
+    document.querySelectorAll(".tab-panel").forEach(p => p.classList.remove("active"));
+    document.querySelectorAll(".tab").forEach(b => b.classList.remove("active"));
+    document.getElementById("tab-" + name).classList.add("active");
+    btn.classList.add("active");
+    if (name === "messages") loadMessages();
+  }
+
+  // ── Toast ─────────────────────────────────────────────────────────────────
+  function toast(msg, isErr=false) {
+    const el = document.getElementById("toast");
+    el.textContent = msg;
+    el.className = isErr ? "err" : "";
+    el.classList.add("show");
+    setTimeout(() => el.classList.remove("show"), 4200);
+  }
+
+  // ── Helpers ───────────────────────────────────────────────────────────────
+  function esc(s) {
+    return String(s).replace(/[&<>"']/g, c =>
+      ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+  }
+
+  function fmt(iso) {
+    return new Date(iso).toLocaleString("en-US",
+      { month:"short", day:"numeric", hour:"numeric", minute:"2-digit", hour12:true });
+  }
+
+  function countdown(iso) {
+    const diff = new Date(iso) - Date.now();
+    if (diff < 0) return { text:"past", soon:false };
+    const h = Math.floor(diff / 3600000);
+    const m = Math.floor((diff % 3600000) / 60000);
+    return { text: h > 0 ? `in ${h}h ${m}m` : `in ${m}m`, soon: diff < 3600000 };
+  }
+
+  // ── Load status bar ───────────────────────────────────────────────────────
+  async function loadStatus() {
+    try {
+      const r = await fetch(`${API}/api/status`);
+      const d = await r.json();
+      document.getElementById("mode-db").textContent  = d.db;
+      document.getElementById("mode-msg").textContent = d.messaging;
+    } catch(e) {}
+  }
+
+  // ── Load appointments ─────────────────────────────────────────────────────
+  async function loadDashboard() {
+    try {
+      const r = await fetch(`${API}/api/appointments`);
+      const d = await r.json();
+      renderTable(d.appointments || []);
+    } catch(e) {
+      document.getElementById("appt-body").innerHTML =
+        `<tr><td colspan="4" class="empty">⚠️ Cannot reach server</td></tr>`;
+    }
+  }
+
+  function renderTable(rows) {
+    const tbody = document.getElementById("appt-body");
+    if (!rows.length) {
+      tbody.innerHTML = `<tr><td colspan="4" class="empty">No appointments yet — create one above 👆</td></tr>`;
+      return;
+    }
+    tbody.innerHTML = rows.map(a => {
+      const { text:ct, soon } = countdown(a.appointment_time);
+      const badgeClass = { confirmed:"confirmed", completed:"completed",
+                           cancelled:"cancelled", reminder:"reminder" }[a.status] || "confirmed";
+      let msgIcon;
+      if (a.confirmation_sid) {
+        const isSim = a.confirmation_sid.startsWith("SIM_");
+        msgIcon = isSim
+          ? `<span class="msg-sim" title="Simulated SID: ${esc(a.confirmation_sid)}">SIM ✓</span>`
+          : `<span class="msg-ok"  title="Twilio SID: ${esc(a.confirmation_sid)}">✓</span>`;
+      } else {
+        msgIcon = `<span class="msg-fail" title="Message not sent">✗</span>`;
+      }
+      return `<tr>
+        <td>
+          <div class="name">${esc(a.customer_name)}</div>
+          <div class="phone">${esc(a.phone_number)}</div>
+        </td>
+        <td>
+          <div>${fmt(a.appointment_time)}</div>
+          <div class="countdown ${soon?'soon':''}">${ct}</div>
+        </td>
+        <td>
+          <select class="status-select badge ${badgeClass}"
+                  onchange="updateStatus('${a.id}',this.value)">
+            ${["confirmed","reminder","completed","cancelled"].map(s =>
+              `<option value="${s}" ${a.status===s?"selected":""}>${s}</option>`
+            ).join("")}
+          </select>
+        </td>
+        <td>${msgIcon}</td>
+      </tr>`;
+    }).join("");
+  }
+
+  // ── Load message log ──────────────────────────────────────────────────────
+  async function loadMessages() {
+    try {
+      const r = await fetch(`${API}/api/messages`);
+      const d = await r.json();
+      renderMessages(d.messages || [], d.twilio_live);
+    } catch(e) {}
+  }
+
+  function renderMessages(msgs, live) {
+    const el = document.getElementById("msg-body");
+    if (!msgs.length) {
+      el.innerHTML = `<div class="empty">No messages sent yet.</div>`;
+      return;
+    }
+    el.innerHTML = msgs.map(m => {
+      const tag = m.simulated
+        ? `<span class="sim-tag">SIMULATED</span>`
+        : `<span class="live-tag">LIVE TWILIO</span>`;
+      const typeClass = m.type === "reminder" ? "type-reminder" : "type-confirmation";
+      return `<div class="msg-log-item">
+        <div class="msg-log-header">
+          <span class="msg-type ${typeClass}">${m.type}</span>
+          ${tag}
+          <span class="msg-to">→ ${esc(m.to)}</span>
+        </div>
+        <div class="msg-body">${esc(m.body)}</div>
+        <div style="display:flex;gap:16px;margin-top:6px">
+          <span class="msg-sid">SID: ${esc(m.sid)}</span>
+          <span class="msg-time">${new Date(m.sentAt).toLocaleString()}</span>
+        </div>
+      </div>`;
+    }).join("");
+  }
+
+  // ── Submit form ───────────────────────────────────────────────────────────
+  async function submitForm() {
+    const name  = document.getElementById("f-name").value.trim();
+    const phone = document.getElementById("f-phone").value.trim();
+    const time  = document.getElementById("f-time").value;
+    if (!name || !phone || !time) { toast("Please fill in all three fields.", true); return; }
+
+    const btn = document.getElementById("submit-btn");
+    btn.disabled = true; btn.textContent = "Sending…";
+
+    try {
+      const r = await fetch(`${API}/api/appointments`, {
+        method:"POST", headers:{"Content-Type":"application/json"},
+        body: JSON.stringify({ customer_name:name, phone_number:phone,
+                               appointment_time: new Date(time).toISOString() }),
+      });
+      const d = await r.json();
+      if (!r.ok) throw new Error(d.error || "Server error");
+
+      const sent = d.message_sent !== false;
+      toast(sent
+        ? `✅ Saved & message sent to ${name}!`
+        : `⚠️ Saved but send failed: ${d.message_error}`, !sent);
+
+      document.getElementById("f-name").value  = "";
+      document.getElementById("f-phone").value = "";
+      document.getElementById("f-time").value  = "";
+      loadDashboard();
+      loadMessages();
+    } catch(e) {
+      toast("Error: " + e.message, true);
+    } finally {
+      btn.disabled = false;
+      btn.textContent = "📨 Confirm & Send WhatsApp";
+    }
+  }
+
+  // ── Update status ─────────────────────────────────────────────────────────
+  async function updateStatus(id, status) {
+    try {
+      await fetch(`${API}/api/appointments/${id}`, {
+        method:"PATCH", headers:{"Content-Type":"application/json"},
+        body: JSON.stringify({ status }),
+      });
+    } catch(e) { toast("Status update failed.", true); }
+  }
+
+  // ── Poll every 10 s ───────────────────────────────────────────────────────
+  loadStatus();
+  loadDashboard();
+  setInterval(loadDashboard, 10_000);
+  setInterval(loadStatus, 30_000);
+</script>
+</body>
+</html>
